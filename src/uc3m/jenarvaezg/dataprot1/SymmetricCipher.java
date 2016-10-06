@@ -26,54 +26,46 @@ public class SymmetricCipher {
     /*************************************************************************************/
 	/* Constructor method */
     /*************************************************************************************/
-	public void SymmetricCipher() {
+	public  SymmetricCipher() {
 	}
 	
 	
-	
-	/*private byte[][] splitIntoBlocks(byte[] input, int size){
-		byte[][] blocks = new byte[size][BLOCK_SIZE];
-		for(int i = 0; i < blocks.length; i++){
-			blocks[i] = Arrays.copyOfRange(input, i*BLOCK_SIZE, i*BLOCK_SIZE + BLOCK_SIZE);
-		}
-		return blocks;
-		
-	}*/
-	
+	/* Adds padding to input and returns input with padding at the end */
 	private byte[] getPaddedInput(byte[] input){
-		int diff = BLOCK_SIZE - (input.length % BLOCK_SIZE);
+		//length of padding
+		int paddingLength = BLOCK_SIZE - (input.length % BLOCK_SIZE);
 		
-		byte[] padding = new byte[diff];
-		for(int i = 0 ; i < diff; i++){
-			padding[i] = (byte)diff;
+		//create padding array
+		byte[] padding = new byte[paddingLength];
+		for(int i = 0 ; i < paddingLength; i++){
+			padding[i] = (byte)paddingLength;
 		}
 		
-		byte[] padded = new byte[input.length + padding.length];	
-		
+		//create array for sum of input and padding and put them together
+		byte[] padded = new byte[input.length + padding.length];			
 		System.arraycopy(input, 0, padded, 0, input.length);
 		System.arraycopy(padding, 0, padded, input.length, padding.length);
 		
 		return padded;
 		
-		/*byte[][] blocks = splitIntoBlocks(padded, padded.length/BLOCK_SIZE);//new byte[][BLOCK_SIZE];
-
-		
-		return blocks;*/
-		
 		
 	}
 	
+	/* Removes padding and throws Exception if padding not correct */
 	private byte[] removePadding(byte[] padded) throws Exception {
+		//last byte gives us padding length
 		int paddingLength = (int)padded[padded.length -1];
+		
+		//check if padding is correct
 		for(int i = 0; i  < paddingLength; i++){
 			if(padded[(padded.length - 1) - i] != paddingLength){
 				throw new Exception("Padding incorrecto");
 			}
 			
 		}
-		byte[] unpadded = new byte[padded.length - paddingLength];
-		System.arraycopy(padded, 0, unpadded, 0, padded.length - paddingLength);
-		//System.out.println(Arrays.toString(a));
+		
+		//return input without padding
+		byte[] unpadded = Arrays.copyOfRange(padded, 0, padded.length - paddingLength);
 		return unpadded;
 	}
 
@@ -81,30 +73,22 @@ public class SymmetricCipher {
 	/* Method to encrypt using AES/CBC/PKCS5 */
     /*************************************************************************************/
 	public byte[] encryptCBC (byte[] input, byte[] byteKey) throws Exception {
-		
-		byte[] ciphertext = null;	
+
 		s = new SymmetricEncryption(byteKey);
-		
-		//byte[][] blocks = getPaddedInput(input);
-		
+
 		byte[] padded = getPaddedInput(input);
+		byte[] ciphertext = new byte[padded.length];		
 		
-		//int msgLength = BLOCK_SIZE * blocks.length;
 		byte[] prev_ciphered = iv;
-		
-		ciphertext = new byte[padded.length];
-		
-		
 		for(int i = 0; i < padded.length / BLOCK_SIZE; i++){
 			byte[] xored = new byte[BLOCK_SIZE];
 			for(int j = 0; j < BLOCK_SIZE; j++){	
-				xored[j] = (byte) (padded[i*BLOCK_SIZE + i] ^ prev_ciphered[j]);
+				xored[j] = (byte) (padded[i*BLOCK_SIZE + j] ^ prev_ciphered[j]);
 			}
 			prev_ciphered = s.encryptBlock(xored);
 			
 			System.arraycopy(prev_ciphered, 0, ciphertext, i * BLOCK_SIZE, BLOCK_SIZE);
 		}
-		
 		
 		return ciphertext;
 	}
@@ -119,23 +103,20 @@ public class SymmetricCipher {
 		
 		byte [] finalplaintext = null;
 		
-		int NBLOCKS = input.length / BLOCK_SIZE;
-		
-		byte[][] blocks = splitIntoBlocks(input, NBLOCKS);
-		
+		int NBLOCKS = input.length / BLOCK_SIZE;		
 		
 		byte[] prev_ciphered = iv;
 		byte[] padded = new byte[input.length];
 		
 		for(int i = 0; i < NBLOCKS; i++){
-			
-			byte[] deciphered = s.decryptBlock(blocks[i]);		
+			byte[] block = Arrays.copyOfRange(input, i*BLOCK_SIZE, i*BLOCK_SIZE + BLOCK_SIZE);
+			byte[] deciphered = s.decryptBlock(block);
 			
 			byte[] xored = new byte[BLOCK_SIZE];
 			for(int j = 0; j < BLOCK_SIZE; j++){	
 				xored[j] = (byte) (deciphered[j] ^ prev_ciphered[j]);
 			}
-			prev_ciphered = blocks[i];
+			prev_ciphered = block;
 			System.arraycopy(xored, 0, padded, i * BLOCK_SIZE, BLOCK_SIZE);
 		}
 		

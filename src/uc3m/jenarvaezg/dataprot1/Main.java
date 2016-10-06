@@ -13,9 +13,7 @@ public class Main {
 		   return sb.toString();
 		}
 	
-	/**
-	 * @param args
-	 */
+	
 	public static void main(String[] args) throws Exception {
 		int KEY_SIZE = 128 / 8;
 		byte[] byteKey = new byte[KEY_SIZE];
